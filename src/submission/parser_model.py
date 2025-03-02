@@ -59,6 +59,9 @@ class ParserModel(nn.Module):
         ###     Linear Layer: https://pytorch.org/docs/stable/generated/torch.nn.Linear.html#torch.nn.Linear
         ###     Dropout: https://pytorch.org/docs/stable/generated/torch.nn.Dropout.html#torch.nn.Dropout
         ### START CODE HERE (~3 Lines)
+        self.embed_to_hidden = nn.Linear(n_features * self.embed_size, hidden_size)
+        self.dropout = nn.Dropout(p = dropout_prob)
+        self.hidden_to_logits = nn.Linear(hidden_size, n_classes)
         ### END CODE HERE
 
         self.reset_parameters()
@@ -87,6 +90,8 @@ class ParserModel(nn.Module):
 
         pass
         ### START CODE HERE (~2 Lines)
+        nn.init.xavier_uniform_(self.embed_to_hidden.weight)
+        nn.init.xavier_uniform_(self.hidden_to_logits.weight)
         ### END CODE HERE
 
     def embedding_lookup(self, t):
@@ -117,6 +122,7 @@ class ParserModel(nn.Module):
         ###     Embedding Layer: https://pytorch.org/docs/stable/generated/torch.nn.Embedding.html 
         ###     View: https://pytorch.org/docs/stable/tensor_view.html
         ### START CODE HERE (~1-3 Lines)
+        x = torch.reshape(self.pretrained_embeddings(t), (t.shape[0], -1))
         ### END CODE HERE
         return x
 
@@ -150,7 +156,11 @@ class ParserModel(nn.Module):
         ### the loss function (torch.nn.CrossEntropyLoss) applies it more efficiently.
         ###
         ### Please see the following docs for support:
-        ###     ReLU: https://pytorch.org/docs/stable/generated/torch.nn.functional.relu.html#torch.nn.functional.relu 
+        ###     ReLU: https://pytorch.org/docs/ stable/generated/torch.nn.functional.relu.html#torch.nn.functional.relu 
         ###  START CODE HERE (~3-5 lines)
+        embeddings = self.embedding_lookup(t)
+        h = nn.ReLU()(self.embed_to_hidden(embeddings))
+        h = self.dropout(h)
+        logits = self.hidden_to_logits(h)
         ### END CODE HERE
         return logits
